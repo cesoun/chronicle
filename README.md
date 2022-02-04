@@ -2,6 +2,10 @@
 
 a blog application for cst-391
 
+## docs
+
+[mikenicholson/passport-jwt](https://github.com/mikenicholson/passport-jwt)
+
 ## env
 
 set and unset the environment variables locally
