@@ -27,7 +27,7 @@ loginRouter.post('/', (req: Request, res: Response, next: NextFunction) => {
 			}
 
 			if (!uqr.user || !uqr.user.data) {
-				return res.sendStatus(501);
+				return res.sendStatus(500);
 			}
 
 			// set the password from to one stored on user from request.body

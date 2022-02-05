@@ -18,6 +18,13 @@ export interface IUser {
 	role?: UserRole;
 }
 
+export interface UserDTO {
+	username?: string;
+	first_name?: string;
+	last_name?: string;
+	role?: UserRole;
+}
+
 export interface UserQueryResult {
 	error?: boolean;
 	message?: string;
@@ -30,6 +37,13 @@ export class User {
 	constructor(user?: IUser) {
 		if (user) this.data = user;
 		if (!this.data?.role) this.data!.role = UserRole.User;
+	}
+
+	toUserDTO(): UserDTO {
+		const { username, first_name, last_name, role } = this.data!;
+		const dto: UserDTO = { username, first_name, last_name, role };
+
+		return dto;
 	}
 
 	async hashPassword(): Promise<string> {
