@@ -15,6 +15,12 @@ export interface IUser {
 	role?: UserRole
 }
 
+export interface UserQueryResult {
+	error?: boolean;
+	message?: string;
+	user?: User;
+}
+
 export class User {
 	data?: IUser;
 
@@ -22,5 +28,5 @@ export class User {
 		if (user) this.data = user;
 	}
 
-	
+	// TODO: Hash / Salt / Verify
 }

@@ -25,8 +25,13 @@ loginRouter.post('/', async (req: Request, res: Response, next: NextFunction) =>
 		return res.status(404).json(err)
 	}
 
-	const token = generateToken(user);
-	res.status(200).json({ token });
+	repo.getUserById(1).then(result => {
+		const token = generateToken(user);
+		res.status(200).json({ token });
+	}).catch(ex => {
+		console.error(ex)
+		res.sendStatus(500);
+	})
 });
 
 /* PUT /login */
