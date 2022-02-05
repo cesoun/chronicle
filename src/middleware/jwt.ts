@@ -26,7 +26,8 @@ passport.use(
 		repo.getUserByUsername(user)
 			.then((uqr) => {
 				if (uqr.error) {
-					return done(uqr, false);
+					// 401 if no user is found. (token is valid, user doesnt exist.)
+					return done(null, false);
 				}
 
 				return done(null, uqr.user);
