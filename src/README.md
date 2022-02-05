@@ -4,3 +4,4 @@
 -   `models` contains all models
 -   `repository` contains our database services
 -   `routes` contains all our routers
+-   `utils` contains all util

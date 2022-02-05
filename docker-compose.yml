@@ -1,0 +1,18 @@
+services:
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'chronicle'
+      MYSQL_USER: 'chron'
+      MYSQL_PASSWORD: 'chron-pwd'
+      MYSQL_ROOT_PASSWORD: 'chron-root-pwd'
+      MYSQL_TCP_PORT: 3320
+    ports:
+      - '3320:3320'
+    expose:
+      - '3320'
+    volumes:
+      - chronicle:/var/lib/mysql
+volumes:
+  chronicle:
