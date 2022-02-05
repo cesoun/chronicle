@@ -69,11 +69,6 @@ loginRouter.put(
 	'/',
 	passport.authenticate('jwt', { session: false }),
 	(req: Request, res: Response, next: NextFunction) => {
-		if (!req.user) {
-			console.error('jwt-auth bypassed?');
-			return res.sendStatus(401);
-		}
-
 		if (!req.body['password'] || !req.body['new']) {
 			let err: RequestErrorResponse = {
 				error: true,

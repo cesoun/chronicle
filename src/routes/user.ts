@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { RequestErrorResponse } from '../util/errors';
 import { repo } from '../repository/sql';
-import { IUser } from '../models/user';
+import { IUser, UserRole } from '../models/user';
+import passport from 'passport';
 const userRouter = Router();
 
 /* GET /user/:username */
@@ -36,6 +37,37 @@ userRouter.get(
 				console.error(ex);
 				return res.sendStatus(500);
 			});
+	}
+);
+
+/* DELETE /user/:username */
+userRouter.delete(
+	'/:username',
+	passport.authenticate('jwt', { session: false }),
+	(req: Request, res: Response, next: NextFunction) => {
+		const user: any = req.user;
+		const { username, role } = user['data'];
+		const target = req.params.username;
+
+		// only allow delete self, unless admin
+		if (username === target || role === UserRole.Admin) {
+			const userToDelete: IUser = { username: target };
+
+			repo.deleteUserByUsername(userToDelete)
+				.then((uqr) => {
+					if (uqr.error) {
+						return res.status(404).json(uqr);
+					}
+
+					return res.sendStatus(204);
+				})
+				.catch((ex) => {
+					console.error(ex);
+					return res.sendStatus(500);
+				});
+		} else {
+			return res.sendStatus(401);
+		}
 	}
 );
 

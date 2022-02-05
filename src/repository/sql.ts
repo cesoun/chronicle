@@ -28,28 +28,56 @@ class SQLRepository {
 	createUser(user: IUser): Promise<UserQueryResult> {
 		return new Promise(async (resolve, reject) => {
 			const u: User = new User(user);
+			let uqr: UserQueryResult = {};
 
 			// hash password and attempt to insert.
 			await u
 				.hashPassword()
 				.then(() => {
-					let uqr: UserQueryResult = {};
-
-					const query: string = `INSERT INTO users (username, hash, email, role) VALUES (?, ?, ?, ?)`;
-					const values = [
-						u.data?.username,
-						u.data?.hash,
-						u.data?.email,
-						u.data?.role,
-					];
-
-					this.pool!.query(query, values, (err, result, fields) => {
+					this.pool!.getConnection(async (err, conn: any) => {
 						if (err) {
 							return reject(err);
 						}
 
-						uqr.user = u;
-						return resolve(uqr);
+						conn.query = util.promisify(conn.query);
+
+						const query: string = `INSERT INTO users (username, hash, email, role) VALUES (?, ?, ?, ?)`;
+						const values = [
+							u.data?.username,
+							u.data?.hash,
+							u.data?.email,
+							u.data?.role,
+						];
+
+						try {
+							let result = await conn.query(query, values);
+
+							if (
+								!result['affectedRows'] ||
+								result['affectedRows'] === 0
+							) {
+								uqr.error = true;
+								uqr.message = 'failed to create user';
+
+								return reject(uqr);
+							}
+
+							uqr.user = u;
+							return resolve(uqr);
+						} catch (ex: any) {
+							uqr.error = true;
+
+							switch (ex['code']) {
+								case 'ER_DUP_ENTRY':
+									uqr.message =
+										'duplicate entry for: username | email';
+									return resolve(uqr);
+								default:
+									return reject(ex);
+							}
+						} finally {
+							conn.release();
+						}
 					});
 				})
 				.catch((err) => {
@@ -60,7 +88,7 @@ class SQLRepository {
 
 	/**
 	 * Attempts to find a User in the database for a given Username
-	 * @param user User containing the username to look for
+	 * @param user IUser containing the username to look for
 	 * @returns Promise<UserQueryResult>
 	 */
 	getUserByUsername(user: IUser): Promise<UserQueryResult> {
@@ -86,7 +114,44 @@ class SQLRepository {
 					return resolve(uqr);
 				}
 
+				conn.release();
+
 				uqr.user = new User(result[0]);
+				return resolve(uqr);
+			});
+		});
+	}
+
+	/**
+	 * Attempts to delete a User from the database
+	 * @param user IUser containing the username of the User to try and delete
+	 * @returns Promise<UserQueryResult>
+	 */
+	deleteUserByUsername(user: IUser): Promise<UserQueryResult> {
+		return new Promise((resolve, reject) => {
+			const u: User = new User(user);
+			let uqr: UserQueryResult = {};
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				const query: string = `DELETE FROM users WHERE username = ?`;
+				const values = [u.data?.username];
+				let result = await conn.query(query, values);
+
+				if (!result['affectedRows'] || result['affectedRows'] === 0) {
+					uqr.error = true;
+					uqr.message = 'could not find user to delete';
+
+					return resolve(uqr);
+				}
+
+				conn.release();
+
 				return resolve(uqr);
 			});
 		});
