@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 const indexRouter = Router();
 
-// GET /
+/* GET / */
 indexRouter.get(
 	'/',
 	function (req: Request, res: Response, next: NextFunction) {

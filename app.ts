@@ -7,6 +7,7 @@ import cors from 'cors';
 import indexRouter from './src/routes/index';
 import registerRouter from './src/routes/register';
 import loginRouter from './src/routes/login';
+import userRouter from './src/routes/user';
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.use(cors());
 app.use('/', indexRouter);
 app.use('/register', registerRouter);
 app.use('/login', loginRouter);
+app.use('/user', userRouter);
 
 module.exports = app;
