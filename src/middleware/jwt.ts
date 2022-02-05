@@ -1,8 +1,13 @@
 import { JwtPayload } from 'jsonwebtoken';
 import passport from 'passport';
-import jsonwebtoken from 'jsonwebtoken'
-
-import { VerifiedCallback, Strategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
+import jsonwebtoken from 'jsonwebtoken';
+import {
+	VerifiedCallback,
+	Strategy,
+	ExtractJwt,
+	StrategyOptions,
+} from 'passport-jwt';
+import { repo } from '../repository/sql';
 import { IUser } from '../models/user';
 
 let opts: StrategyOptions = {
@@ -14,24 +19,30 @@ let opts: StrategyOptions = {
 
 passport.use(
 	new Strategy(opts, (jwt_payload: JwtPayload, done: VerifiedCallback) => {
-		console.log('TODO: JWTStrategy Middleware');
-		console.log(jwt_payload);
+		let user: IUser = {
+			username: jwt_payload.sub,
+		};
 
-		let err = new Error('Unimplemented Middleware');
+		repo.getUserByUsername(user)
+			.then((uqr) => {
+				if (uqr.error) {
+					return done(uqr, false);
+				}
 
-		if (!jwt_payload) {
-			return done(err, null);
-		}
-
-		return done(null, { username: 'username', password: 'password' });
+				return done(null, uqr.user);
+			})
+			.catch((ex) => {
+				console.error(ex, 'jwt_payload');
+				return done(null, false);
+			});
 	})
 );
 
-export function generateToken(user: IUser): string {
+export function generateToken(username: string): string {
 	const payload = {
 		iss: opts.issuer,
-		sub: user.username
-	}
+		sub: username,
+	};
 
-	return jsonwebtoken.sign(payload, opts.secretOrKey!, {expiresIn: '10h'})
+	return jsonwebtoken.sign(payload, opts.secretOrKey!, { expiresIn: '10h' });
 }

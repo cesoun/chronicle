@@ -8,7 +8,7 @@ export interface IPost {
 
 export class Post {
 	data?: IPost;
-	
+
 	constructor(post?: IPost) {
 		if (post) this.data = post;
 	}
