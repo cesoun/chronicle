@@ -19,9 +19,10 @@ create table posts
     id          int auto_increment
         primary key,
     author_id   int                                 null,
+    title       varchar(255)                        not null,
     content     text                                not null comment 'content is unsanitized markdown',
-    created_at  timestamp default CURRENT_TIMESTAMP not null,
     modified_at timestamp                           null on update CURRENT_TIMESTAMP,
+    created_at  timestamp default CURRENT_TIMESTAMP not null,
     constraint posts_users_id_fk
         foreign key (author_id) references users (id)
             on delete cascade
