@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import passport from 'passport';
-import { User } from '../models/user';
+import { User, UserRole } from '../models/user';
 import { IPost, Post } from '../models/post';
 import { repo } from '../repository/sql';
 import { RequestErrorResponse } from '../util/errors';
@@ -69,7 +69,49 @@ postRouter.delete(
 	'/:id',
 	passport.authenticate('jwt', { session: false }),
 	(req: Request, res: Response, next: NextFunction) => {
-		return res.sendStatus(501);
+		const user: User = req.user as User;
+		const id: number = parseInt(req.params['id']);
+		if (isNaN(id)) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message: `'${req.params['id']}' is not a valid post id`,
+			};
+
+			return res.status(404).json(err);
+		}
+
+		// determine if the post exists
+		repo.getPostById(id)
+			.then((pqr) => {
+				if (pqr.error) {
+					return res.status(404).json(pqr);
+				}
+
+				// If user owns post, or they are admin, allow delete.
+				if (
+					user.data?.id === pqr.post?.data?.author_id ||
+					user.data?.role === UserRole.Admin
+				) {
+					repo.deletePostById(id)
+						.then((pqr) => {
+							if (pqr.error) {
+								return res.status(404).json(pqr);
+							}
+
+							return res.sendStatus(204);
+						})
+						.catch((ex) => {
+							console.error(ex);
+							return res.sendStatus(500);
+						});
+				} else {
+					return res.sendStatus(401);
+				}
+			})
+			.catch((ex) => {
+				console.error(ex);
+				return res.sendStatus(500);
+			});
 	}
 );
 

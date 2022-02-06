@@ -297,6 +297,11 @@ class SQLRepository {
 		});
 	}
 
+	/**
+	 * Attempt to get a Post with a given id.
+	 * @param id id of the Post
+	 * @returns Promise<PostQueryResult>
+	 */
 	getPostById(id: number): Promise<PostQueryResult> {
 		return new Promise((resolve, reject) => {
 			let pqr: PostQueryResult = {};
@@ -327,7 +332,11 @@ class SQLRepository {
 		});
 	}
 
-	/*
+	/**
+	 * Attempt to delete a Post with the supplied Id
+	 * @param id Id of the Post to delete
+	 * @returns Promise<PostQueryResult>
+	 */
 	deletePostById(id: number): Promise<PostQueryResult> {
 		return new Promise((resolve, reject) => {
 			let pqr: PostQueryResult = {};
@@ -357,7 +366,6 @@ class SQLRepository {
 			});
 		});
 	}
-	*/
 }
 
 export const repo = new SQLRepository();
