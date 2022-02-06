@@ -1,7 +1,7 @@
 import util from 'util';
 import mysql, { PoolOptions, Pool } from 'mysql2';
 import { IUser, User, UserQueryResult, UserUpdateDTO } from '../models/user';
-import { IPost } from '../models/post';
+import { IPost, Post, PostQueryResult, PostUpdateDTO } from '../models/post';
 
 class SQLRepository {
 	private cfg?: PoolOptions;
@@ -230,6 +230,57 @@ class SQLRepository {
 							uqr.message =
 								'duplicate entry for: username | email';
 							return resolve(uqr);
+						default:
+							return reject(ex);
+					}
+				} finally {
+					conn.release();
+				}
+			});
+		});
+	}
+
+	createPost(user: User, post: IPost): Promise<PostQueryResult> {
+		return new Promise((resolve, reject) => {
+			let pqr: PostQueryResult = {};
+
+			post.author_id = user.data?.id;
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				const query: string = `INSERT INTO posts (author_id, title, content) VALUES (?, ?, ?)`;
+				const values = [post.author_id, post.title, post.content];
+
+				try {
+					let result = await conn.query(query, values);
+
+					if (
+						!result['affectedRows'] ||
+						result['affectedRows'] === 0
+					) {
+						pqr.error = true;
+						pqr.message = 'failed to create post';
+
+						return reject(pqr);
+					}
+
+					post.id = result['insertId'];
+					pqr.post = new Post(post);
+
+					return resolve(pqr);
+				} catch (ex: any) {
+					pqr.error = true;
+
+					switch (ex['code']) {
+						case 'ER_BAD_NULL_ERROR':
+							pqr.message =
+								'failed to create post: one or more fields were null';
+							return resolve(pqr);
 						default:
 							return reject(ex);
 					}

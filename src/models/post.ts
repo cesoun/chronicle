@@ -8,6 +8,7 @@ export interface IPost {
 }
 
 export interface PostDTO {
+	id?: number;
 	author?: string;
 	author_first?: string;
 	author_last?: string;
@@ -18,6 +19,7 @@ export interface PostDTO {
 }
 
 export interface PostUpdateDTO {
+	id?: number;
 	title?: string;
 	content?: string;
 	created_at?: Date;
@@ -38,14 +40,14 @@ export class Post {
 	}
 
 	toPostDTO(): PostDTO {
-		let dto: PostDTO = {};
+		const { title, content, id } = this.data!;
+		let dto: PostDTO = { title, content, id };
 
 		return dto;
 	}
 
 	toPostUpdateDTO(): PostUpdateDTO {
-		let dto: PostUpdateDTO = {};
-
+		let dto: PostUpdateDTO = { ...this.data };
 		return dto;
 	}
 }

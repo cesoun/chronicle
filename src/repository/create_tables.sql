@@ -18,7 +18,7 @@ create table posts
 (
     id          int auto_increment
         primary key,
-    author_id   int                                 null,
+    author_id   int                                 not null,
     title       varchar(255)                        not null,
     content     text                                not null comment 'content is unsanitized markdown',
     modified_at timestamp                           null on update CURRENT_TIMESTAMP,
