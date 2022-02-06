@@ -64,10 +64,11 @@ class SQLRepository {
 
 							uqr.user = u;
 							return resolve(uqr);
-						} catch (ex: any) {
+						} catch (ex) {
+							const exc: any = ex;
 							uqr.error = true;
 
-							switch (ex['code']) {
+							switch (exc['code']) {
 								case 'ER_DUP_ENTRY':
 									uqr.message =
 										'duplicate entry for: username | email';
@@ -222,10 +223,11 @@ class SQLRepository {
 					// set and return it.
 					uqr.user = user;
 					return resolve(uqr);
-				} catch (ex: any) {
+				} catch (ex) {
+					const exc: any = ex;
 					uqr.error = true;
 
-					switch (ex['code']) {
+					switch (exc['code']) {
 						case 'ER_DUP_ENTRY':
 							uqr.message =
 								'duplicate entry for: username | email';
@@ -279,10 +281,11 @@ class SQLRepository {
 					pqr.post = new Post(post);
 
 					return resolve(pqr);
-				} catch (ex: any) {
+				} catch (ex) {
+					const exc: any = ex;
 					pqr.error = true;
 
-					switch (ex['code']) {
+					switch (exc['code']) {
 						case 'ER_BAD_NULL_ERROR':
 							pqr.message =
 								'failed to create post: one or more fields were null';

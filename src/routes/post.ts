@@ -87,7 +87,6 @@ postRouter.put(
 		repo.getPostById(id)
 			.then((pqr) => {
 				if (pqr.error) {
-					console.log(pqr.error);
 					return res.status(404).json(pqr);
 				}
 
@@ -99,8 +98,6 @@ postRouter.put(
 					repo.updatePostById(pqr.post!, fields)
 						.then((pqr) => {
 							if (pqr.error) {
-								console.log(pqr.error);
-
 								return res.status(404).json(pqr);
 							}
 
