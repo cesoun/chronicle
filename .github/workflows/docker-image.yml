@@ -15,16 +15,25 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Create env file
+      env: 
+        MYSQL_USER: ${{ secrets.MYSQL_USER }}
+        MYSQL_PASS: ${{ secret.MYSQL_PASS }}
+        MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+        MYSQL_PORT: ${{ secret.MYSQL_PORT }}
+        MYSQL_DATABASE: ${{ secret.MYSQL_DATABASE }}
+        JWT_SECRET: ${{ secret.JWT_SECRET }}
+        JWT_ISSUER: ${{ secret.JWT_ISSUER }}
+        PROD: ${{ secret.PROD }}
       run: |
         touch .env
-        echo ${{ secrets.MYSQL_USER }} >> .env
-        echo ${{ secret.MYSQL_PASS }} >> .env
-        echo ${{ secrets.MYSQL_HOST }} >> .env
-        echo ${{ secret.MYSQL_PORT }} >> .env
-        echo ${{ secret.MYSQL_DATABASE }} >> .env
-        echo ${{ secret.JWT_SECRET }} >> .env
-        echo ${{ secret.JWT_ISSUER }} >> .env
-        echo ${{ secret.PROD }} >> .env
+        echo $MYSQL_USER >> .env
+        echo $MYSQL_PASS >> .env
+        echo $MYSQL_HOST >> .env
+        echo $MYSQL_PORT >> .env
+        echo $MYSQL_DATABASE >> .env
+        echo $secret.JWT_SECRET >> .env
+        echo $secret.JWT_ISSUER >> .env
+        echo $secret.PROD >> .env
         cat .env
         
     - name: Build the Docker image
