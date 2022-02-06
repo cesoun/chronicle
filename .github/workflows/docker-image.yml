@@ -31,9 +31,9 @@ jobs:
         echo $MYSQL_HOST >> .env
         echo $MYSQL_PORT >> .env
         echo $MYSQL_DATABASE >> .env
-        echo $secret.JWT_SECRET >> .env
-        echo $secret.JWT_ISSUER >> .env
-        echo $secret.PROD >> .env
+        echo $JWT_SECRET >> .env
+        echo $JWT_ISSUER >> .env
+        echo $PROD >> .env
         cat .env
         
     - name: Build the Docker image
