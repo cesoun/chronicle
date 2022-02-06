@@ -240,6 +240,12 @@ class SQLRepository {
 		});
 	}
 
+	/**
+	 * Create a Post for a given User
+	 * @param user User that is creating the post
+	 * @param post Post to create
+	 * @returns Promise<PostQueryResult>
+	 */
 	createPost(user: User, post: IPost): Promise<PostQueryResult> {
 		return new Promise((resolve, reject) => {
 			let pqr: PostQueryResult = {};
@@ -290,6 +296,68 @@ class SQLRepository {
 			});
 		});
 	}
+
+	getPostById(id: number): Promise<PostQueryResult> {
+		return new Promise((resolve, reject) => {
+			let pqr: PostQueryResult = {};
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				const query: string = `SELECT * FROM posts WHERE id = ? LIMIT 1`;
+				const values = [id];
+				let result = await conn.query(query, values);
+
+				if (result.length === 0) {
+					pqr.error = true;
+					pqr.message = 'no post found for given id';
+
+					return resolve(pqr);
+				}
+
+				conn.release();
+
+				pqr.post = new Post(result[0]);
+				return resolve(pqr);
+			});
+		});
+	}
+
+	/*
+	deletePostById(id: number): Promise<PostQueryResult> {
+		return new Promise((resolve, reject) => {
+			let pqr: PostQueryResult = {};
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				const query: string = `DELETE FROM posts WHERE id = ?`;
+				const values = [id];
+
+				let result = await conn.query(query, values);
+
+				if (!result['affectedRows'] || result['affectedRows'] === 0) {
+					pqr.error = true;
+					pqr.message = 'could not find post to delete';
+
+					return resolve(pqr);
+				}
+
+				conn.release();
+
+				return resolve(pqr);
+			});
+		});
+	}
+	*/
 }
 
 export const repo = new SQLRepository();
