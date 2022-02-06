@@ -41,60 +41,95 @@ userRouter.put(
 		const { username, role } = user.data!;
 		const target = req.params.username;
 
-		// only allow self edit, unless admin
-		if (username === target || role === UserRole.Admin) {
-			const password = req.body['password'];
-			const fields = req.body['new'] as UserUpdateDTO;
+		// Verify fields
+		const password = req.body['password'];
+		const fields = req.body['new'] as UserUpdateDTO;
 
-			if (!password || !fields) {
-				let err: RequestErrorResponse = {
-					error: true,
-					message: 'missing required field: password | new',
-				};
+		// Determine if we are allowed to discard the password field.
+		if (!password) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message: 'missing required field: password',
+			};
 
+			// if target is self
+			if (username === target) {
 				return res.status(404).json(err);
+			} else {
+				// target is someone else
+				if (role !== UserRole.Admin) {
+					return res.sendStatus(401);
+				}
 			}
+		}
 
-			// Only Admins can update role
-			if (fields.role && role !== UserRole.Admin) {
-				delete fields.role;
-			}
+		// Check that we got fields
+		if (!fields) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message: 'missing required field: new',
+			};
 
-			// Reject if every field is null
-			if (Object.values(fields).every((f) => f === null)) {
-				let err: RequestErrorResponse = {
-					error: true,
-					message:
-						'missing at least one optional field: username | first_name | last_name | password | email | role',
-				};
+			return res.status(404).json(err);
+		}
 
-				return res.status(404).json(err);
-			}
+		// Only Admins can update role
+		if (fields.role && role !== UserRole.Admin) {
+			delete fields.role;
+		}
 
-			// Verify password
+		// Reject if every field is null
+		if (Object.values(fields).every((f) => f === null)) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message:
+					'missing at least one optional field: username | first_name | last_name | password | email | role',
+			};
+
+			return res.status(404).json(err);
+		}
+
+		if (username === target) {
+			// Target is self, verify password & update them.
 			user.data!.password = password;
 			user.verifyPassword()
 				.then((verified) => {
 					if (verified) {
-						// Update User
-						// Return Err / 204
+						repo.updateUser(user, fields)
+							.then((uqr) => {
+								if (uqr.error) {
+									return res.status(404).json(uqr);
+								}
 
-						return res.sendStatus(204);
+								return res
+									.status(200)
+									.json(uqr.user?.toUserUpdateDTO());
+							})
+							.catch((ex) => {
+								console.error(ex, 'verification failed');
+								return res.sendStatus(500);
+							});
+					} else {
+						let err: RequestErrorResponse = {
+							error: true,
+							message: 'supplied password did not match',
+						};
+
+						return res.status(401).json(err);
 					}
-
-					let err: RequestErrorResponse = {
-						error: true,
-						message: 'supplied password did not match',
-					};
-
-					return res.status(401).json(err);
 				})
 				.catch((ex) => {
-					console.error(ex);
+					console.error(
+						ex,
+						'failed to verify password in user update'
+					);
 					return res.sendStatus(500);
 				});
+		} else if (role === UserRole.Admin) {
+			// TODO: Update other as Admin
+			res.sendStatus(501);
 		} else {
-			return res.sendStatus(401);
+			res.sendStatus(401);
 		}
 	}
 );

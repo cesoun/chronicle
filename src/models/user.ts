@@ -54,6 +54,19 @@ export class User {
 		return dto;
 	}
 
+	toUserUpdateDTO(): UserUpdateDTO {
+		const { username, first_name, last_name, email, role } = this.data!;
+		const dto: UserUpdateDTO = {
+			username,
+			first_name,
+			last_name,
+			email,
+			role,
+		};
+
+		return dto;
+	}
+
 	async hashPassword(): Promise<string> {
 		return new Promise(async (resolve, reject) => {
 			if (!this.data) {
