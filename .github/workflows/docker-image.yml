@@ -1,0 +1,31 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create env file
+      run: |
+        touch .env
+        echo ${{ secrets.MYSQL_USER }} >> .env
+        echo ${{ secret.MYSQL_PASS }} >> .env
+        echo ${{ secrets.MYSQL_HOST }} >> .env
+        echo ${{ secret.MYSQL_PORT }} >> .env
+        echo ${{ secret.MYSQL_DATABASE }} >> .env
+        echo ${{ secret.JWT_SECRET }} >> .env
+        echo ${{ secret.JWT_ISSUER }} >> .env
+        echo ${{ secret.PROD }} >> .env
+        cat .env
+        
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag chronicle:$(date +%s)
