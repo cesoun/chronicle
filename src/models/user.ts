@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import { RowDataPacket } from 'mysql2';
 
 export enum UserRole {
 	User = 'user',
@@ -22,6 +21,15 @@ export interface UserDTO {
 	username?: string;
 	first_name?: string;
 	last_name?: string;
+	role?: UserRole;
+}
+
+export interface UserUpdateDTO {
+	username?: string;
+	first_name?: string;
+	last_name?: string;
+	password?: string;
+	email?: string;
 	role?: UserRole;
 }
 
