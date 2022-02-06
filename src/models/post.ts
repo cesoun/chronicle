@@ -40,14 +40,21 @@ export class Post {
 	}
 
 	toPostDTO(): PostDTO {
-		const { title, content, id } = this.data!;
-		let dto: PostDTO = { title, content, id };
+		const { title, content, id, created_at, modified_at } = this.data!;
+		let dto: PostDTO = { title, content, id, created_at, modified_at };
 
 		return dto;
 	}
 
 	toPostUpdateDTO(): PostUpdateDTO {
-		let dto: PostUpdateDTO = { ...this.data };
+		const { title, content, id, created_at, modified_at } = this.data!;
+		let dto: PostUpdateDTO = {
+			title,
+			content,
+			id,
+			created_at,
+			modified_at,
+		};
 		return dto;
 	}
 }

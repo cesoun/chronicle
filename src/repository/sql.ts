@@ -366,6 +366,67 @@ class SQLRepository {
 			});
 		});
 	}
+
+	/**
+	 * Attempt to update a Post with the supplied fields.
+	 * @param post Post to update
+	 * @param fields PostUpdateDTO containing the fields to update
+	 * @returns Promise<PostQueryResult>
+	 */
+	updatePostById(
+		post: Post,
+		fields: PostUpdateDTO
+	): Promise<PostQueryResult> {
+		return new Promise((resolve, reject) => {
+			let pqr: PostQueryResult = {};
+
+			if (!post.data?.id) {
+				pqr.error = true;
+				pqr.message = 'missing field id, internal error?';
+
+				return reject(pqr);
+			}
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				// Build the Query
+				let query: string = `UPDATE posts SET `;
+
+				// Set fields
+				if (fields.title) query += `title='${fields.title}', `;
+				if (fields.content) query += `title='${fields.content}', `;
+				query = query.substring(0, query.length - 2);
+
+				// Set target
+				query += ` WHERE id='${post.data!.id}'`;
+
+				let result = await conn.query(query);
+
+				if (!result['affectedRows'] || result['affectedRows'] === 0) {
+					pqr.error = true;
+					pqr.message = 'failed to update post';
+
+					return reject(pqr);
+				}
+
+				conn.release();
+
+				// Update he user data with the new fields.
+				Object.keys(fields).forEach((key) => {
+					(post.data as any)[key] = (fields as any)[key];
+				});
+
+				// set and return it.
+				pqr.post = post;
+				return resolve(pqr);
+			});
+		});
+	}
 }
 
 export const repo = new SQLRepository();
