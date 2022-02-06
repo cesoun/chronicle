@@ -22,6 +22,7 @@ COPY bin ./bin
 COPY package.json ./
 COPY .env ./
 
+RUN ls -a
 RUN npm i --only=prod
 
 COPY --from=0 /chronicle/dist ./dist
