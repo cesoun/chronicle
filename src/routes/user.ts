@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { RequestErrorResponse } from '../util/errors';
 import { repo } from '../repository/sql';
-import { IUser, UserRole } from '../models/user';
+import { IUser, UserRole, User, UserUpdateDTO } from '../models/user';
 import passport from 'passport';
 const userRouter = Router();
 
@@ -10,14 +10,6 @@ userRouter.get(
 	'/:username',
 	(req: Request, res: Response, next: NextFunction) => {
 		const { username } = req.params;
-		if (!username) {
-			let err: RequestErrorResponse = {
-				error: true,
-				message: 'missing required param: username',
-			};
-
-			return res.status(404).json(err);
-		}
 
 		let user: IUser = { username };
 
@@ -40,13 +32,153 @@ userRouter.get(
 	}
 );
 
+/* PUT /user/:username */
+userRouter.put(
+	'/:username',
+	passport.authenticate('jwt', { session: false }),
+	(req: Request, res: Response, next: NextFunction) => {
+		const user: User = req.user as User;
+		const { username, role } = user.data!;
+		const target = req.params.username;
+
+		// Verify fields
+		const password = req.body['password'];
+		const fields = req.body['new'] as UserUpdateDTO;
+
+		// Determine if we are allowed to discard the password field.
+		if (!password) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message: 'missing required field: password',
+			};
+
+			// if target is self
+			if (username === target) {
+				return res.status(404).json(err);
+			} else {
+				// target is someone else
+				if (role !== UserRole.Admin) {
+					return res.sendStatus(401);
+				}
+			}
+		}
+
+		// Check that we got fields
+		if (!fields) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message: 'missing required field: new',
+			};
+
+			return res.status(404).json(err);
+		}
+
+		// Only Admins can update role
+		if (fields.role && role !== UserRole.Admin) {
+			delete fields.role;
+		}
+
+		// Reject if every field is null
+		if (Object.values(fields).every((f) => f === null)) {
+			let err: RequestErrorResponse = {
+				error: true,
+				message:
+					'missing at least one optional field: username | first_name | last_name | password | email | role',
+			};
+
+			return res.status(404).json(err);
+		}
+
+		if (username === target) {
+			// Target is self, verify password & update them.
+			user.data!.password = password;
+			user.verifyPassword()
+				.then((verified) => {
+					if (verified) {
+						repo.updateUser(user, fields)
+							.then((uqr) => {
+								if (uqr.error) {
+									return res.status(404).json(uqr);
+								}
+
+								// TODO: Determine if we should re-issue the token or have the user login again.
+								return res
+									.status(200)
+									.json(uqr.user?.toUserUpdateDTO());
+							})
+							.catch((ex) => {
+								console.error(ex, 'verification failed');
+								return res.sendStatus(500);
+							});
+					} else {
+						let err: RequestErrorResponse = {
+							error: true,
+							message: 'supplied password did not match',
+						};
+
+						return res.status(401).json(err);
+					}
+				})
+				.catch((ex) => {
+					console.error(
+						ex,
+						'failed to verify password in user update'
+					);
+					return res.sendStatus(500);
+				});
+		} else if (role === UserRole.Admin) {
+			// get the target user.
+			const userToUpdate: IUser = { username: target };
+			repo.getUserByUsername(userToUpdate)
+				.then((uqr) => {
+					// reject if not found
+					if (uqr.error) {
+						return res.status(404).json(uqr);
+					}
+
+					if (!uqr.user) {
+						console.error(
+							uqr,
+							'no user returned from database for admin user update '
+						);
+						return res.sendStatus(500);
+					}
+
+					// attempt to update the user.
+					repo.updateUser(uqr.user, fields)
+						.then((uqr) => {
+							// reject if error
+							if (uqr.error) {
+								return res.status(404).json(uqr);
+							}
+
+							// return updated user
+							return res
+								.status(200)
+								.json(uqr.user?.toUserUpdateDTO());
+						})
+						.catch((ex) => {
+							console.error(ex);
+							res.sendStatus(500);
+						});
+				})
+				.catch((ex) => {
+					console.error(ex);
+					return res.sendStatus(500);
+				});
+		} else {
+			return res.sendStatus(401);
+		}
+	}
+);
+
 /* DELETE /user/:username */
 userRouter.delete(
 	'/:username',
 	passport.authenticate('jwt', { session: false }),
 	(req: Request, res: Response, next: NextFunction) => {
-		const user: any = req.user;
-		const { username, role } = user['data'];
+		const user: User = req.user as User;
+		const { username, role } = user.data!;
 		const target = req.params.username;
 
 		// only allow delete self, unless admin

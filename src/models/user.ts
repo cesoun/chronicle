@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import { RowDataPacket } from 'mysql2';
 
 export enum UserRole {
 	User = 'user',
@@ -25,6 +24,15 @@ export interface UserDTO {
 	role?: UserRole;
 }
 
+export interface UserUpdateDTO {
+	username?: string;
+	first_name?: string;
+	last_name?: string;
+	password?: string;
+	email?: string;
+	role?: UserRole;
+}
+
 export interface UserQueryResult {
 	error?: boolean;
 	message?: string;
@@ -42,6 +50,19 @@ export class User {
 	toUserDTO(): UserDTO {
 		const { username, first_name, last_name, role } = this.data!;
 		const dto: UserDTO = { username, first_name, last_name, role };
+
+		return dto;
+	}
+
+	toUserUpdateDTO(): UserUpdateDTO {
+		const { username, first_name, last_name, email, role } = this.data!;
+		const dto: UserUpdateDTO = {
+			username,
+			first_name,
+			last_name,
+			email,
+			role,
+		};
 
 		return dto;
 	}

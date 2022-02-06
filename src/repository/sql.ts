@@ -1,6 +1,6 @@
 import util from 'util';
 import mysql, { PoolOptions, Pool } from 'mysql2';
-import { IUser, User, UserQueryResult } from '../models/user';
+import { IUser, User, UserQueryResult, UserUpdateDTO } from '../models/user';
 import { IPost } from '../models/post';
 
 class SQLRepository {
@@ -153,6 +153,89 @@ class SQLRepository {
 				conn.release();
 
 				return resolve(uqr);
+			});
+		});
+	}
+
+	/**
+	 * Attempts to update a User with the supplied Fields
+	 * @param user User to update
+	 * @param fields Fields to update on the User
+	 * @returns Promse<UserQueryResult>
+	 */
+	updateUser(user: User, fields: UserUpdateDTO): Promise<UserQueryResult> {
+		return new Promise((resolve, reject) => {
+			let uqr: UserQueryResult = {};
+
+			if (!user.data?.username) {
+				uqr.error = true;
+				uqr.message = 'missing field username, internal error?';
+
+				return reject(uqr);
+			}
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				// Build the Query
+				let query: string = `UPDATE users SET `;
+				for (const [k, v] of Object.entries(fields)) {
+					if (k === 'password') {
+						user.data!.password = fields.password;
+						await user
+							.hashPassword()
+							.then((hash) => {
+								query += `hash='${hash}', `;
+							})
+							.catch((ex) => {
+								return reject(ex);
+							});
+					} else {
+						query += `${k}='${v}', `;
+					}
+				}
+				query = query.substring(0, query.length - 2);
+				query += ` WHERE username='${user.data!.username}'`;
+
+				try {
+					let result = await conn.query(query);
+
+					if (
+						!result['affectedRows'] ||
+						result['affectedRows'] === 0
+					) {
+						uqr.error = true;
+						uqr.message = 'failed to update user';
+
+						return reject(uqr);
+					}
+
+					// Update he user data with the new fields.
+					Object.keys(fields).forEach((key) => {
+						(user.data as any)[key] = (fields as any)[key];
+					});
+
+					// set and return it.
+					uqr.user = user;
+					return resolve(uqr);
+				} catch (ex: any) {
+					uqr.error = true;
+
+					switch (ex['code']) {
+						case 'ER_DUP_ENTRY':
+							uqr.message =
+								'duplicate entry for: username | email';
+							return resolve(uqr);
+						default:
+							return reject(ex);
+					}
+				} finally {
+					conn.release();
+				}
 			});
 		});
 	}
