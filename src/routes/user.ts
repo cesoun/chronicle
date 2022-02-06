@@ -101,6 +101,7 @@ userRouter.put(
 									return res.status(404).json(uqr);
 								}
 
+								// TODO: Determine if we should re-issue the token or have the user login again.
 								return res
 									.status(200)
 									.json(uqr.user?.toUserUpdateDTO());
@@ -126,10 +127,47 @@ userRouter.put(
 					return res.sendStatus(500);
 				});
 		} else if (role === UserRole.Admin) {
-			// TODO: Update other as Admin
-			res.sendStatus(501);
+			// get the target user.
+			const userToUpdate: IUser = { username: target };
+			repo.getUserByUsername(userToUpdate)
+				.then((uqr) => {
+					// reject if not found
+					if (uqr.error) {
+						return res.status(404).json(uqr);
+					}
+
+					if (!uqr.user) {
+						console.error(
+							uqr,
+							'no user returned from database for admin user update '
+						);
+						return res.sendStatus(500);
+					}
+
+					// attempt to update the user.
+					repo.updateUser(uqr.user, fields)
+						.then((uqr) => {
+							// reject if error
+							if (uqr.error) {
+								return res.status(404).json(uqr);
+							}
+
+							// return updated user
+							return res
+								.status(200)
+								.json(uqr.user?.toUserUpdateDTO());
+						})
+						.catch((ex) => {
+							console.error(ex);
+							res.sendStatus(500);
+						});
+				})
+				.catch((ex) => {
+					console.error(ex);
+					return res.sendStatus(500);
+				});
 		} else {
-			res.sendStatus(401);
+			return res.sendStatus(401);
 		}
 	}
 );
