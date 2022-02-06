@@ -17,13 +17,13 @@ jobs:
     - name: Create env file
       env: 
         MYSQL_USER: ${{ secrets.MYSQL_USER }}
-        MYSQL_PASS: ${{ secret.MYSQL_PASS }}
+        MYSQL_PASS: ${{ secrets.MYSQL_PASS }}
         MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-        MYSQL_PORT: ${{ secret.MYSQL_PORT }}
-        MYSQL_DATABASE: ${{ secret.MYSQL_DATABASE }}
-        JWT_SECRET: ${{ secret.JWT_SECRET }}
-        JWT_ISSUER: ${{ secret.JWT_ISSUER }}
-        PROD: ${{ secret.PROD }}
+        MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+        MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+        PROD: ${{ secrets.PROD }}
       run: |
         touch .env
         echo $MYSQL_USER >> .env
