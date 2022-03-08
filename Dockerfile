@@ -20,7 +20,7 @@ WORKDIR /chronicle
 
 COPY bin ./bin
 COPY package.json ./
-COPY .env ./
+# COPY .env ./
 
 RUN ls -a
 RUN npm i --only=prod
