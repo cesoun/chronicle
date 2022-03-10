@@ -1,7 +1,13 @@
 import util from 'util';
 import mysql, { PoolOptions, Pool } from 'mysql2';
 import { IUser, User, UserQueryResult, UserUpdateDTO } from '../models/user';
-import { IPost, Post, PostQueryResult, PostUpdateDTO } from '../models/post';
+import {
+	IPost,
+	Post,
+	PostQueryResult,
+	PostUpdateDTO,
+	MultiplePostQueryResult,
+} from '../models/post';
 
 class SQLRepository {
 	private cfg?: PoolOptions;
@@ -331,6 +337,67 @@ class SQLRepository {
 
 				pqr.post = new Post(result[0]);
 				return resolve(pqr);
+			});
+		});
+	}
+
+	getPosts(
+		page: number,
+		limit: number,
+		orderby: string
+	): Promise<MultiplePostQueryResult> {
+		return new Promise((resolve, reject) => {
+			let mpqr: MultiplePostQueryResult = {};
+
+			this.pool?.getConnection(async (err, conn: any) => {
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				if (orderby !== 'asc' && orderby != 'desc') orderby = 'desc';
+
+				// Get the posts for query
+				let query: string = `SELECT * FROM posts ORDER BY created_at ${orderby} LIMIT ?, ?`;
+				let values = [(page - 1) * limit, limit];
+				let result = await conn.query(query, values);
+
+				if (result.length === 0) {
+					mpqr.error = true;
+					mpqr.message = 'no posts found';
+
+					return resolve(mpqr);
+				}
+
+				// Loop posts
+				mpqr.posts = [];
+				for (const post of result) {
+					mpqr.posts.push(post);
+				}
+
+				// Get the total to populate pagination
+				query = 'SELECT COUNT(*) AS count FROM posts';
+				result = await conn.query(query);
+
+				if (result.length === 0) {
+					mpqr.error = true;
+					mpqr.message = 'failed to get post total for pagination';
+
+					return resolve(mpqr);
+				}
+
+				conn.release();
+
+				// Loop pagination
+				const count = result[0]['count'];
+				mpqr.pagination = {
+					page: page,
+					limit: limit,
+					pages: Math.ceil(count / limit),
+				};
+
+				return resolve(mpqr);
 			});
 		});
 	}

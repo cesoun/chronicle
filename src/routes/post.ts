@@ -29,6 +29,32 @@ postRouter.post(
 	}
 );
 
+postRouter.get('/', (req: Request, res: Response, next: NextFunction) => {
+	// Extract query params
+	const { page, limit, orderby } = req.query;
+
+	let p: number = parseInt(page as string);
+	let l: number = parseInt(limit as string);
+	let ob: string = orderby as string; // This one is evil, handling it in sql instead.
+
+	// Cleanup limits
+	if (!p || p <= 0) p = 1;
+	if (!l || l <= 0 || l > 25) l = 10;
+
+	repo.getPosts(p, l, ob ? ob : 'desc')
+		.then((mpqr) => {
+			if (mpqr.error) {
+				return res.status(404).json(mpqr);
+			}
+
+			return res.status(200).json(mpqr);
+		})
+		.catch((ex) => {
+			console.error(ex);
+			return res.sendStatus(500);
+		});
+});
+
 /* GET /post/:id */
 postRouter.get('/:id', (req: Request, res: Response, next: NextFunction) => {
 	const id: number = parseInt(req.params['id']);

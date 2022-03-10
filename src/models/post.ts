@@ -32,6 +32,19 @@ export interface PostQueryResult {
 	post?: Post;
 }
 
+export interface MultiplePostQueryResult {
+	error?: boolean;
+	message?: string;
+	posts?: Post[];
+	pagination?: PostPagination;
+}
+
+export interface PostPagination {
+	page?: number; // The current page
+	limit?: number; // The limit
+	pages?: number; // The total pages based on the offset
+}
+
 export class Post {
 	data?: IPost;
 
