@@ -73,7 +73,25 @@ postRouter.get('/:id', (req: Request, res: Response, next: NextFunction) => {
 				return res.status(404).json(pqr);
 			}
 
-			return res.status(200).json(pqr.post?.toPostDTO());
+			repo.getUserById(pqr.post!.data!.author_id!)
+				.then((uqr) => {
+					if (uqr.error) {
+						return res.status(404).json(uqr);
+					}
+
+					const { username, first_name, last_name } = uqr.user!.data!;
+					let post = pqr.post!;
+
+					post.data!.author_username = username;
+					post.data!.author_first = first_name;
+					post.data!.author_last = last_name;
+
+					return res.status(200).json(post.toPostDTO());
+				})
+				.catch((ex) => {
+					console.error(ex);
+					return res.sendStatus(500);
+				});
 		})
 		.catch((ex) => {
 			console.error(ex);

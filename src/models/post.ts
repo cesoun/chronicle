@@ -1,6 +1,9 @@
 export interface IPost {
 	id?: number;
 	author_id?: number;
+	author_username?: string;
+	author_first?: string;
+	author_last?: string;
 	title?: string;
 	content?: string;
 	created_at?: Date;
@@ -9,7 +12,8 @@ export interface IPost {
 
 export interface PostDTO {
 	id?: number;
-	author?: string;
+	author_id?: number;
+	author_username?: string;
 	author_first?: string;
 	author_last?: string;
 	title?: string;
@@ -53,8 +57,28 @@ export class Post {
 	}
 
 	toPostDTO(): PostDTO {
-		const { title, content, id, created_at, modified_at } = this.data!;
-		let dto: PostDTO = { title, content, id, created_at, modified_at };
+		const {
+			title,
+			content,
+			id,
+			author_id,
+			author_username,
+			author_first,
+			author_last,
+			created_at,
+			modified_at,
+		} = this.data!;
+		let dto: PostDTO = {
+			title,
+			content,
+			id,
+			author_id,
+			author_username,
+			author_first,
+			author_last,
+			created_at,
+			modified_at,
+		};
 
 		return dto;
 	}

@@ -94,6 +94,41 @@ class SQLRepository {
 	}
 
 	/**
+	 * Get's a user with the given id, rejects if no user is found.
+	 * @param id number of the user id to look for.
+	 * @returns Promise<UserQueryResult>
+	 */
+	getUserById(id: number): Promise<UserQueryResult> {
+		return new Promise((resolve, reject) => {
+			this.pool?.getConnection(async (err, conn: any) => {
+				let uqr: UserQueryResult = {};
+
+				if (err) {
+					return reject(err);
+				}
+
+				conn.query = util.promisify(conn.query);
+
+				const query: string = `SELECT username, first_name, last_name FROM users WHERE id = ? LIMIT 1`;
+				const values = [id];
+				let result = await conn.query(query, values);
+
+				if (result.length === 0) {
+					uqr.error = true;
+					uqr.message = 'no user found for given id';
+
+					return resolve(uqr);
+				}
+
+				conn.release();
+
+				uqr.user = new User(result[0]);
+				return resolve(uqr);
+			});
+		});
+	}
+
+	/**
 	 * Attempts to find a User in the database for a given Username
 	 * @param user IUser containing the username to look for
 	 * @returns Promise<UserQueryResult>
@@ -341,6 +376,14 @@ class SQLRepository {
 		});
 	}
 
+	/**
+	 * Get paginated results for posts from the database. Errors if there
+	 * are no posts in the database or another error occurs.
+	 * @param page number to start from
+	 * @param limit number of results to return
+	 * @param orderby string asc or desc
+	 * @returns Promise<MultiplePostQueryResult>
+	 */
 	getPosts(
 		page: number,
 		limit: number,
