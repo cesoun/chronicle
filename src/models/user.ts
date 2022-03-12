@@ -18,6 +18,7 @@ export interface IUser {
 }
 
 export interface UserDTO {
+	id?: number;
 	username?: string;
 	first_name?: string;
 	last_name?: string;
@@ -25,6 +26,7 @@ export interface UserDTO {
 }
 
 export interface UserUpdateDTO {
+	id?: number;
 	username?: string;
 	first_name?: string;
 	last_name?: string;
@@ -48,15 +50,16 @@ export class User {
 	}
 
 	toUserDTO(): UserDTO {
-		const { username, first_name, last_name, role } = this.data!;
-		const dto: UserDTO = { username, first_name, last_name, role };
+		const { id, username, first_name, last_name, role } = this.data!;
+		const dto: UserDTO = { id, username, first_name, last_name, role };
 
 		return dto;
 	}
 
 	toUserUpdateDTO(): UserUpdateDTO {
-		const { username, first_name, last_name, email, role } = this.data!;
+		const { id, username, first_name, last_name, email, role } = this.data!;
 		const dto: UserUpdateDTO = {
+			id,
 			username,
 			first_name,
 			last_name,
